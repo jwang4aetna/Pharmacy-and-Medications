@@ -1,0 +1,229 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Pharmacy accumulators API
+basePath: '/v3/aetnahealth_pharmacy/memberships/{membershipId}'
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /benefitsandaccumulators:
+    get:
+      tags:
+        - Member profile service
+      summary: Provides a list of pharmacy accumulators and phases for a member.
+      parameters:
+        - name: membershipId
+          in: path
+          description: The membership id of the member making the request.
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/accums'
+        '400':
+          description: Bad request
+          schema:
+            $ref: '#/definitions/error'
+        '500':
+          description: Internal Server error
+          schema:
+            $ref: '#/definitions/error'
+        '503':
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/error'
+definitions:
+  accums:
+    properties:
+      readBenefitsAndAccumulatorsResponseType:
+        type: object
+        properties:
+          policy:
+            $ref: '#/definitions/benefitProducts'
+          accumulatorSummary:
+            $ref: '#/definitions/accumulatorSummaries'
+  benefitProducts:
+    type: object
+    required: 
+      - benefitProductType
+    properties:
+      planType:
+        type: string
+        example: "INDIVIDUAL"
+        description: The plan type. This api is for supporting Medicare Part-D accums, and for now there is only "INDIVIDUAL" plantype that is possible.
+        enum:
+          - INDIVIDUAL
+      enrollments:
+        type: array
+        items:
+          $ref: '#/definitions/enrolledMemberships'
+  enrolledMemberships:
+    type: object
+    required: 
+      - individual
+    properties:
+      individual:
+        $ref: '#/definitions/individual'
+  individual:
+    type: object
+    properties:
+      membershipIdentifier:
+        $ref: '#/definitions/membershipIdentifier'
+      accumulators:
+        type: array
+        items:
+          $ref: '#/definitions/accumulators'
+  accumulatorSummaries:
+    type: object
+    properties:
+      subscriberAccumulatorPhase:
+          $ref: '#/definitions/subscriberAccumulatorPhase'
+  subscriberAccumulatorPhase:
+    type: object
+    properties:
+      membershipIdentifier:
+        $ref: '#/definitions/membershipIdentifier'
+      phaseSummaries:
+        type: array
+        items:
+          $ref: '#/definitions/phaseSummaries'
+      tierTypes:
+        type: array
+        items:
+          $ref: '#/definitions/tiers'
+  membershipIdentifier:
+    type: object
+    properties:
+      resourceId:
+        example: "59~123456789+10+011+20140101+0479670+HA+01"
+        description: The membership resource id of the member enrolled in the benefits.
+  tiers:
+    type: object
+    description: The tiers of phases available
+    properties:
+      tierType:
+        type: string
+        example: "In Network"
+        description: The type of network tier.
+      phaseTypes:
+        type: array
+        items:
+          type: string
+        example: ["DEDUCTIBLE", "INDIVIDUAL_COVERAGE_LIMIT", "TROOP", "CATASTROPHIC_COVERAGE"]
+  phaseSummaries:
+    type: object
+    description: The phase summary gives out the phase(s) the member is in.
+    properties:
+      phase:
+        type: string
+        example:  "DEDUCTIBLE"
+        description: The phase of the member.
+        enum:
+          - DEDUCTIBLE
+          - INDIVIDUAL_COVERAGE_LIMIT
+          - TROOP
+          - CATASTROPHIC_COVERAGE
+      accumulator:
+        $ref: '#/definitions/accumulator'
+  accumulator:
+    type: object
+    properties:
+      currentValue:
+        type: number
+        example: 1000.01
+        description: The year to date dollar amount applied.
+      limitValue:
+        type: number
+        example: 500.10
+        description: The dollar amount limit for the accumulator.
+      code:
+        type: string
+        example: "DEDUCTIBLE"
+        description: Identifies the accumulator type.
+        enum:
+          - DEDUCTIBLE
+          - INITIAL_COVERAGE_LIMIT
+          - TRUE_OUT_OF_POCKET
+      calculatedValue:
+        type: number
+        example:  10.01
+        description: The remainder dollar amount for the accumulator.
+      inNetworkIndicator:
+        type: string
+        example:  "InNetwork"
+        description: If a network is applicable, identifies if the accumulator is for in-network or out of network. All enumeration indicate that accumulator is applicable to all networks and considered overall accums.Pharmacy accums are always going to be in-network.
+        enum:
+          - InNetwork
+      description:
+        type: string
+        example:  "Deductible"
+        description: A brief description of the accumulator
+  accumulators:
+    type: object
+    properties:
+      currentValue:
+        type: number
+        example: 1000.01
+        description: The year to date dollar amount applied.
+      limitValue:
+        type: number
+        example: 500.10
+        description: The dollar amount limit for the accumulator.
+      code:
+        type: string
+        example: "DEDUCTIBLE"
+        description: Identifies the accumulator type.
+        enum:
+          - DEDUCTIBLE
+          - INITIAL_COVERAGE_LIMIT
+          - TRUE_OUT_OF_POCKET
+      calculatedValue:
+        type: number
+        example:  10.01
+        description: The remainder dollar amount for the accumulator.
+      networkIndicator:
+        type: string
+        example:  "InNetwork"
+        description: If a network is applicable, identifies if the accumulator is for in-network or out of network. All enumeration indicate that accumulator is applicable to all networks and considered overall accums.Pharmacy accums are always going to be in-network.
+        enum:
+          - InNetwork
+      description:
+        type: string
+        example:  "Deductible"
+        description: A brief description of the accumulator
+  error:
+    required:
+      - httpCode
+      - httpMessage
+      - moreInformation
+    properties:
+      httpCode:
+        type: integer
+        example: 400
+        description: Status code is used to determine what went wrong and/or how the downstream system responds to the request
+      httpMessage:
+        type: string
+        example: Bad request
+        description: A human readable description of the status code
+      moreInformation:
+        type: string
+        example: "Input Parameters should have required property 'zipCode'"
+        description: A more detailed description of the error
+      status:
+        type: integer
+        example: 400
+        description: Status code is used to determine what went wrong and/or how the downstream system responds to the request
+      title:
+        type: string
+        example: Bad request
+        description: A human readable description of the status code
+      detail:
+        type: string
+        example: "Input Parameters should have required property 'zipCode'"
+        description: A more detailed description of the error
